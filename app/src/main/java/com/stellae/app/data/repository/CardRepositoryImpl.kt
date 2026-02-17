@@ -90,6 +90,9 @@ class CardRepositoryImpl @Inject constructor(
     override suspend fun updateFsrsState(state: FsrsState) =
         fsrsDao.upsert(state.toEntity())
 
+    override suspend fun getWeakCards(limit: Int): List<FsrsState> =
+        fsrsDao.getWeakCards(limit).map { it.toDomain() }
+
     override suspend fun getCardCount(): Int =
         cardDao.getCount()
 }

@@ -1,5 +1,6 @@
 package com.stellae.app.ui.screens.quiz
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stellae.app.domain.gamification.RankSystem
@@ -26,6 +27,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val getDueCardsUseCase: GetDueCardsUseCase,
     private val getNextQuestionUseCase: GetNextQuestionUseCase,
     private val recordAnswerUseCase: RecordAnswerUseCase,
@@ -33,6 +35,8 @@ class QuizViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val rankSystem: RankSystem,
 ) : ViewModel() {
+
+    private val mode: String = savedStateHandle.get<String>("mode") ?: "normal"
 
     data class QuizUiState(
         val currentQuestion: QuizQuestion? = null,
@@ -177,7 +181,14 @@ class QuizViewModel @Inject constructor(
             streakCount   = progress.streakCount
             streakLastDate = progress.streakLastDate
 
-            cardQueue = getDueCardsUseCase()
+            cardQueue = if (mode == "weak") {
+                // Focus on cards the user has gotten wrong, weakest first.
+                val weak = cardRepository.getWeakCards(limit = 10)
+                // Fall back to regular due cards if no weak cards exist yet.
+                weak.ifEmpty { getDueCardsUseCase() }
+            } else {
+                getDueCardsUseCase()
+            }
 
             if (cardQueue.isEmpty()) {
                 _uiState.update { it.copy(isSessionComplete = true, isLoading = false) }

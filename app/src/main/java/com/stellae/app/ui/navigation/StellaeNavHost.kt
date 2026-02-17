@@ -32,7 +32,9 @@ import com.stellae.app.ui.screens.wheel.DignityWheelScreen
  */
 sealed class Screen(val route: String) {
     object Home          : Screen("home")
-    object Quiz          : Screen("quiz")
+    object Quiz          : Screen("quiz?mode={mode}") {
+        fun createRoute(mode: String = "normal") = "quiz?mode=$mode"
+    }
     object Summary       : Screen("summary")
     object Wheel         : Screen("wheel")
     object Boss          : Screen("boss/{bossId}") {
@@ -67,7 +69,7 @@ fun StellaeNavHost(
         composable(Screen.Home.route) {
             HomeScreen(
                 onStartSession = {
-                    navController.navigate(Screen.Quiz.route)
+                    navController.navigate(Screen.Quiz.createRoute("normal"))
                 },
                 onOpenWheel = {
                     navController.navigate(Screen.Wheel.route)
@@ -76,13 +78,19 @@ fun StellaeNavHost(
         }
 
         // ── Quiz ─────────────────────────────────────────────────────────────
-        composable(Screen.Quiz.route) {
+        composable(
+            route = Screen.Quiz.route,
+            arguments = listOf(
+                navArgument("mode") {
+                    type = NavType.StringType
+                    defaultValue = "normal"
+                }
+            ),
+        ) {
             QuizScreen(
                 onSessionComplete = { result ->
                     sessionResultHolder.result = result
                     navController.navigate(Screen.Summary.route) {
-                        // Remove the Quiz entry from the back stack so pressing
-                        // back from Summary returns to Home.
                         popUpTo(Screen.Quiz.route) { inclusive = true }
                     }
                 },
@@ -102,7 +110,7 @@ fun StellaeNavHost(
                         }
                     },
                     onPracticeWeakSpots = {
-                        navController.navigate(Screen.Quiz.route) {
+                        navController.navigate(Screen.Quiz.createRoute("weak")) {
                             popUpTo(Screen.Summary.route) { inclusive = true }
                         }
                     },

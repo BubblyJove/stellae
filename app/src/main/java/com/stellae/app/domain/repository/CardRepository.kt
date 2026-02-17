@@ -32,6 +32,9 @@ interface CardRepository {
     /** Persist an updated [FsrsState] (insert or replace). */
     suspend fun updateFsrsState(state: FsrsState)
 
+    /** Cards the user has gotten wrong, sorted by lowest stability (weakest first). */
+    suspend fun getWeakCards(limit: Int): List<FsrsState>
+
     /** Total number of cards in the catalogue. */
     suspend fun getCardCount(): Int
 }

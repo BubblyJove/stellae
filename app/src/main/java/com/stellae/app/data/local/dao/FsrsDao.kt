@@ -30,4 +30,8 @@ interface FsrsDao {
 
     @Query("SELECT COUNT(*) FROM fsrs_data WHERE state = 0")
     suspend fun getNewCardCount(): Int
+
+    /** Cards the user has gotten wrong (lapses > 0), weakest first. */
+    @Query("SELECT * FROM fsrs_data WHERE lapses > 0 ORDER BY stability ASC LIMIT :limit")
+    suspend fun getWeakCards(limit: Int): List<FsrsDataEntity>
 }
