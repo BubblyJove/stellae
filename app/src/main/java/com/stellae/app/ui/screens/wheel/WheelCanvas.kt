@@ -403,7 +403,7 @@ private fun DrawScope.drawZodiacRing(cx: Float, cy: Float, baseRadius: Float) {
             val paint = Paint().apply {
                 textSize = (outerR - innerR) * 0.55f
                 textAlign = Paint.Align.CENTER
-                color = Color.White.copy(alpha = 0.95f).toArgb()
+                setColor(Color.White.copy(alpha = 0.95f).toArgb())
                 isAntiAlias = true
                 typeface = Typeface.DEFAULT_BOLD
             }
@@ -470,7 +470,7 @@ private fun DrawScope.drawExaltationRing(cx: Float, cy: Float, baseRadius: Float
                 val paint = Paint().apply {
                     textSize = (outerR - innerR) * 0.48f
                     textAlign = Paint.Align.CENTER
-                    color = Color.White.copy(alpha = 0.9f).toArgb()
+                    setColor(Color.White.copy(alpha = 0.9f).toArgb())
                     isAntiAlias = true
                 }
                 drawText(PLANET_GLYPHS[exalt.first], gx, gy + paint.textSize / 3f, paint)

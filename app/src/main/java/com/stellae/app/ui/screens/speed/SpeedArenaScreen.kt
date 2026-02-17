@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -533,7 +533,7 @@ private fun ResultContent(
     ) {
         if (isNewBest) {
             Icon(
-                imageVector = Icons.Default.EmojiEvents,
+                imageVector = Icons.Default.Star,
                 contentDescription = "New record",
                 tint = Gold,
                 modifier = Modifier.size(56.dp)

@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -148,7 +148,7 @@ fun DignityWheelScreen(
                     }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Layers,
+                    imageVector = Icons.Default.Menu,
                     contentDescription = "Toggle rings",
                     tint = Gold,
                     modifier = Modifier.size(20.dp)

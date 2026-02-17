@@ -19,7 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -251,7 +251,7 @@ fun SettingsScreen(
                                 tint = GoldDim,
                                 modifier = Modifier.size(20.dp)
                             )
-                            Spacer(androidx.compose.foundation.layout.Modifier.size(10.dp))
+                            Spacer(Modifier.size(10.dp))
                             Text(
                                 text = "Stellae",
                                 style = StellaeTypography.bodyMd.copy(
@@ -436,7 +436,7 @@ private fun TimePickerRow(
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Icon(
-            imageVector = Icons.Default.AccessTime,
+            imageVector = Icons.Default.DateRange,
             contentDescription = null,
             tint = GoldDim,
             modifier = Modifier.size(18.dp)

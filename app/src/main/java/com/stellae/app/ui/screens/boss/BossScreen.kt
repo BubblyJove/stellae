@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,8 +35,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -342,7 +343,7 @@ private fun BossIntroContent(
                     .border(2.dp, Wrong.copy(alpha = 0.70f), CircleShape)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Shield,
+                    imageVector = Icons.Default.Warning,
                     contentDescription = null,
                     tint = Wrong,
                     modifier = Modifier.size(56.dp)
@@ -504,7 +505,7 @@ private fun BossChallengeContent(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Timer,
+                            imageVector = Icons.Default.Star,
                             contentDescription = null,
                             tint = timerColor,
                             modifier = Modifier.size(14.dp)

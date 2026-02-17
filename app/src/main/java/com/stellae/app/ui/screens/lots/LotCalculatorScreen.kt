@@ -25,7 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -283,7 +283,7 @@ fun LotCalculatorScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             Icon(
-                                imageVector = Icons.Default.ExpandMore,
+                                imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Select lot",
                                 tint = GoldDim
                             )
