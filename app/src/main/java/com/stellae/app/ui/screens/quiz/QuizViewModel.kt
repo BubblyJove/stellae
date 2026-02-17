@@ -165,6 +165,11 @@ class QuizViewModel @Inject constructor(
 
     private fun loadSession() {
         viewModelScope.launch {
+            val now = System.currentTimeMillis()
+
+            // Set session start time immediately so the duration is always valid.
+            _uiState.update { it.copy(sessionStartTime = now) }
+
             // Snapshot rank / XP before the session mutates them.
             val progress = userRepository.getUserProgress().first()
             rankBefore    = progress.rank
@@ -181,7 +186,6 @@ class QuizViewModel @Inject constructor(
 
             _uiState.update { it.copy(
                 totalQuestions   = cardQueue.size,
-                sessionStartTime = System.currentTimeMillis(),
                 isLoading        = false,
             )}
 

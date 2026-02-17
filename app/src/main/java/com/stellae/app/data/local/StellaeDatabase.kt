@@ -44,7 +44,7 @@ import com.stellae.app.data.local.entity.UserProgressEntity
         ConfusionPairEntity::class,
         AchievementEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class StellaeDatabase : RoomDatabase() {

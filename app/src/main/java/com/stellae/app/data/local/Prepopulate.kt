@@ -3,9 +3,11 @@ package com.stellae.app.data.local
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.stellae.app.data.local.entity.AchievementEntity
+import com.stellae.app.data.local.entity.CardEntity
 import com.stellae.app.data.local.entity.DecanEntity
 import com.stellae.app.data.local.entity.DomicileEntity
 import com.stellae.app.data.local.entity.ExaltationEntity
+import com.stellae.app.data.local.entity.FsrsDataEntity
 import com.stellae.app.data.local.entity.LotEntity
 import com.stellae.app.data.local.entity.PlanetEntity
 import com.stellae.app.data.local.entity.SignEntity
@@ -40,6 +42,7 @@ class PrepopulateCallback(
             insertLots(database)
             insertUserProgress(database)
             insertAchievements(database)
+            insertCards(database)
         }
     }
 
@@ -399,6 +402,151 @@ class PrepopulateCallback(
 
     private suspend fun insertAchievements(db: StellaeDatabase) {
         db.achievementDao().upsertAll(buildAchievements())
+    }
+
+    // -------------------------------------------------------------------------
+    // Quiz Cards + FSRS Data
+    // Generates CardEntity + FsrsDataEntity (state=0, new) for every dignity fact.
+    // -------------------------------------------------------------------------
+
+    private suspend fun insertCards(db: StellaeDatabase) {
+        val cards = buildCards()
+        db.cardDao().insertAll(cards)
+        // Create a matching FSRS entry (state=0 = new) for each card.
+        db.fsrsDao().upsertAll(cards.map { FsrsDataEntity(cardId = it.id) })
+    }
+
+    private fun buildCards(): List<CardEntity> {
+        val cards = mutableListOf<CardEntity>()
+        var id = 1L
+
+        val planetNames = mapOf(
+            1 to "Sun", 2 to "Moon", 3 to "Mercury",
+            4 to "Venus", 5 to "Mars", 6 to "Jupiter", 7 to "Saturn"
+        )
+        val signNames = mapOf(
+            1 to "Aries", 2 to "Taurus", 3 to "Gemini", 4 to "Cancer",
+            5 to "Leo", 6 to "Virgo", 7 to "Libra", 8 to "Scorpio",
+            9 to "Sagittarius", 10 to "Capricorn", 11 to "Aquarius", 12 to "Pisces"
+        )
+
+        // ── Domicile cards (12): "Which planet rules {sign}?" ──
+        val domiciles = listOf(
+            1 to 5, 2 to 4, 3 to 3, 4 to 2, 5 to 1, 6 to 3,
+            7 to 4, 8 to 5, 9 to 6, 10 to 7, 11 to 7, 12 to 6
+        )
+        for ((signId, planetId) in domiciles) {
+            cards += CardEntity(
+                id = id++,
+                factType = "domicile",
+                questionTemplate = "Which planet rules {sign}?",
+                correctAnswer = planetNames[planetId]!!,
+                explanation = "${planetNames[planetId]} has domicile in ${signNames[signId]}.",
+                relatedPlanetId = planetId,
+                relatedSignId = signId,
+                difficultyTier = 1
+            )
+        }
+
+        // ── Exaltation cards (7): "Which planet is exalted in {sign}?" ──
+        val exaltations = listOf(
+            1 to 1, 2 to 2, 6 to 3, 12 to 4, 10 to 5, 4 to 6, 7 to 7
+        ) // signId to planetId
+        for ((signId, planetId) in exaltations) {
+            cards += CardEntity(
+                id = id++,
+                factType = "exaltation",
+                questionTemplate = "Which planet is exalted in {sign}?",
+                correctAnswer = planetNames[planetId]!!,
+                explanation = "${planetNames[planetId]} is exalted in ${signNames[signId]}.",
+                relatedPlanetId = planetId,
+                relatedSignId = signId,
+                difficultyTier = 1
+            )
+        }
+
+        // ── Reverse exaltation (7): "In which sign is {planet} exalted?" ──
+        val revExalt = listOf(
+            1 to 1, 2 to 2, 3 to 6, 4 to 12, 5 to 10, 6 to 4, 7 to 7
+        ) // planetId to signId
+        for ((planetId, signId) in revExalt) {
+            cards += CardEntity(
+                id = id++,
+                factType = "sign_of_planet",
+                questionTemplate = "In which sign is {planet} exalted?",
+                correctAnswer = signNames[signId]!!,
+                explanation = "${planetNames[planetId]} is exalted in ${signNames[signId]}.",
+                relatedPlanetId = planetId,
+                relatedSignId = signId,
+                difficultyTier = 2
+            )
+        }
+
+        // ── Triplicity cards (12): day/night/participating rulers per element ──
+        data class Tri(val element: String, val day: Int, val night: Int, val part: Int)
+        val triplicities = listOf(
+            Tri("fire", 1, 6, 7), Tri("earth", 4, 2, 5),
+            Tri("air", 7, 3, 6), Tri("water", 4, 5, 2)
+        )
+        for (tri in triplicities) {
+            val elem = tri.element.replaceFirstChar { it.uppercaseChar() }
+            cards += CardEntity(
+                id = id++,
+                factType = "triplicity",
+                questionTemplate = "Which planet is the day triplicity ruler of $elem signs?",
+                correctAnswer = planetNames[tri.day]!!,
+                explanation = "${planetNames[tri.day]} is the day triplicity ruler of $elem signs.",
+                relatedPlanetId = tri.day,
+                relatedSignId = null,
+                difficultyTier = 2
+            )
+            cards += CardEntity(
+                id = id++,
+                factType = "triplicity",
+                questionTemplate = "Which planet is the night triplicity ruler of $elem signs?",
+                correctAnswer = planetNames[tri.night]!!,
+                explanation = "${planetNames[tri.night]} is the night triplicity ruler of $elem signs.",
+                relatedPlanetId = tri.night,
+                relatedSignId = null,
+                difficultyTier = 2
+            )
+            cards += CardEntity(
+                id = id++,
+                factType = "triplicity",
+                questionTemplate = "Which planet is the participating triplicity ruler of $elem signs?",
+                correctAnswer = planetNames[tri.part]!!,
+                explanation = "${planetNames[tri.part]} is the participating triplicity ruler of $elem signs.",
+                relatedPlanetId = tri.part,
+                relatedSignId = null,
+                difficultyTier = 3
+            )
+        }
+
+        // ── Decan cards (36): "Which planet rules the Xth decan of {sign}?" ──
+        val decanRulers = listOf(
+            listOf(5,1,6), listOf(4,2,7), listOf(3,4,7), listOf(2,5,6),
+            listOf(1,6,5), listOf(3,7,4), listOf(4,3,6), listOf(5,4,2),
+            listOf(6,5,1), listOf(7,4,3), listOf(7,3,4), listOf(6,2,5)
+        )
+        val ordinals = listOf("1st", "2nd", "3rd")
+        for (signIdx in 0..11) {
+            for (decanIdx in 0..2) {
+                val pid = decanRulers[signIdx][decanIdx]
+                val signId = signIdx + 1
+                cards += CardEntity(
+                    id = id++,
+                    factType = "decan",
+                    questionTemplate = "Which planet rules the ${ordinals[decanIdx]} decan of {sign}?",
+                    correctAnswer = planetNames[pid]!!,
+                    explanation = "${planetNames[pid]} rules the ${ordinals[decanIdx]} decan (${decanIdx * 10}\u00B0\u2013${decanIdx * 10 + 9}\u00B0) of ${signNames[signId]}.",
+                    relatedPlanetId = pid,
+                    relatedSignId = signId,
+                    difficultyTier = 3
+                )
+            }
+        }
+
+        return cards
     }
 
     @Suppress("LongMethod")

@@ -40,6 +40,7 @@ object DatabaseModule {
             "stellae.db"
         )
             .addCallback(PrepopulateCallback(databaseProvider))
+            .fallbackToDestructiveMigration()
             .build()
     }
 
