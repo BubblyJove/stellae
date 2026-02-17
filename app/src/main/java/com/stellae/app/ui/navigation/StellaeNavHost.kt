@@ -1,16 +1,27 @@
 package com.stellae.app.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.stellae.app.ui.theme.TextPrimary
+import androidx.navigation.navArgument
+import com.stellae.app.domain.model.SessionResult
+import com.stellae.app.ui.screens.achievements.AchievementsScreen
+import com.stellae.app.ui.screens.boss.BossScreen
+import com.stellae.app.ui.screens.home.HomeScreen
+import com.stellae.app.ui.screens.lots.LotCalculatorScreen
+import com.stellae.app.ui.screens.onboarding.OnboardingScreen
+import com.stellae.app.ui.screens.progress.ProgressDashboardScreen
+import com.stellae.app.ui.screens.quiz.QuizScreen
+import com.stellae.app.ui.screens.reference.ReferenceLibraryScreen
+import com.stellae.app.ui.screens.settings.SettingsScreen
+import com.stellae.app.ui.screens.speed.SpeedArenaScreen
+import com.stellae.app.ui.screens.summary.SessionSummaryScreen
+import com.stellae.app.ui.screens.wheel.DignityWheelScreen
 
 // ── Screen sealed class ───────────────────────────────────────────────────────
 
@@ -24,7 +35,9 @@ sealed class Screen(val route: String) {
     object Quiz          : Screen("quiz")
     object Summary       : Screen("summary")
     object Wheel         : Screen("wheel")
-    object Boss          : Screen("boss")
+    object Boss          : Screen("boss/{bossId}") {
+        fun createRoute(bossId: String) = "boss/$bossId"
+    }
     object Achievements  : Screen("achievements")
     object Reference     : Screen("reference")
     object LotCalculator : Screen("lot_calculator")
@@ -34,95 +47,158 @@ sealed class Screen(val route: String) {
     object Onboarding    : Screen("onboarding")
 }
 
-// ── Placeholder screen helper ─────────────────────────────────────────────────
-
-@Composable
-private fun PlaceholderScreen(name: String) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier         = Modifier.fillMaxSize(),
-    ) {
-        Text(
-            text  = name,
-            color = TextPrimary,
-        )
-    }
-}
-
 // ── StellaeNavHost ────────────────────────────────────────────────────────────
-
-/**
- * Root navigation host for the Stellae app.
- *
- * Placeholder composables are wired in for every destination; swap them out
- * for real screen implementations as they are built.
- *
- * Usage:
- *   StellaeTheme {
- *       StellaeNavHost()
- *   }
- *
- * To navigate programmatically supply your own [navController]:
- *   val nav = rememberNavController()
- *   StellaeNavHost(navController = nav)
- *   // later: nav.navigate(Screen.Quiz.route)
- */
 @Composable
 fun StellaeNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.Home.route,
 ) {
+    // Mutable holder for the most recent session result, shared between the
+    // Quiz destination's completion callback and the Summary destination's
+    // screen composable.
+    val sessionResultHolder = remember { SessionResultHolder() }
+
     NavHost(
         navController    = navController,
         startDestination = startDestination,
     ) {
 
+        // ── Home ─────────────────────────────────────────────────────────────
         composable(Screen.Home.route) {
-            PlaceholderScreen("Home")
+            HomeScreen(
+                onStartSession = {
+                    navController.navigate(Screen.Quiz.route)
+                },
+                onOpenWheel = {
+                    navController.navigate(Screen.Wheel.route)
+                },
+            )
         }
 
+        // ── Quiz ─────────────────────────────────────────────────────────────
         composable(Screen.Quiz.route) {
-            PlaceholderScreen("Quiz")
+            QuizScreen(
+                onSessionComplete = { result ->
+                    sessionResultHolder.result = result
+                    navController.navigate(Screen.Summary.route) {
+                        // Remove the Quiz entry from the back stack so pressing
+                        // back from Summary returns to Home.
+                        popUpTo(Screen.Quiz.route) { inclusive = true }
+                    }
+                },
+            )
         }
 
+        // ── Summary ──────────────────────────────────────────────────────────
         composable(Screen.Summary.route) {
-            PlaceholderScreen("Summary")
+            val result = sessionResultHolder.result
+
+            if (result != null) {
+                SessionSummaryScreen(
+                    sessionResult = result,
+                    onDone = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    },
+                    onPracticeWeakSpots = {
+                        navController.navigate(Screen.Quiz.route) {
+                            popUpTo(Screen.Summary.route) { inclusive = true }
+                        }
+                    },
+                )
+            } else {
+                // Fallback: if the process was killed and restored without a
+                // result in the holder, navigate home rather than crash.
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Summary.route) { inclusive = true }
+                }
+            }
         }
 
+        // ── Wheel ────────────────────────────────────────────────────────────
         composable(Screen.Wheel.route) {
-            PlaceholderScreen("Wheel")
+            DignityWheelScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
-        composable(Screen.Boss.route) {
-            PlaceholderScreen("Boss")
+        // ── Boss ─────────────────────────────────────────────────────────────
+        composable(
+            route = Screen.Boss.route,
+            arguments = listOf(navArgument("bossId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val bossId = backStackEntry.arguments?.getString("bossId") ?: "sol"
+            BossScreen(
+                bossId = bossId,
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Achievements ────────────────────────────────────────────────────
         composable(Screen.Achievements.route) {
-            PlaceholderScreen("Achievements")
+            AchievementsScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Reference ───────────────────────────────────────────────────────
         composable(Screen.Reference.route) {
-            PlaceholderScreen("Reference")
+            ReferenceLibraryScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Lot Calculator ──────────────────────────────────────────────────
         composable(Screen.LotCalculator.route) {
-            PlaceholderScreen("Lot Calculator")
+            LotCalculatorScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Progress ────────────────────────────────────────────────────────
         composable(Screen.Progress.route) {
-            PlaceholderScreen("Progress")
+            ProgressDashboardScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Speed Arena ─────────────────────────────────────────────────────
         composable(Screen.SpeedArena.route) {
-            PlaceholderScreen("Speed Arena")
+            SpeedArenaScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Settings ────────────────────────────────────────────────────────
         composable(Screen.Settings.route) {
-            PlaceholderScreen("Settings")
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
 
+        // ── Onboarding ──────────────────────────────────────────────────────
         composable(Screen.Onboarding.route) {
-            PlaceholderScreen("Onboarding")
+            OnboardingScreen(
+                onComplete = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                },
+            )
         }
     }
+}
+
+// ── SessionResultHolder ───────────────────────────────────────────────────────
+
+/**
+ * Simple in-process mutable container for the most recent [SessionResult].
+ *
+ * This avoids the complexity of Parcelable/JSON serialisation while still
+ * letting the nav graph hand the result from Quiz to Summary. The holder is
+ * created once with [remember] in [StellaeNavHost] and survives recomposition.
+ */
+private class SessionResultHolder {
+    var result: SessionResult? = null
 }
